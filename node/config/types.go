@@ -131,6 +131,11 @@ type DealmakingConfig struct {
 	MaxStagingDealsBytes int64
 	// The maximum number of parallel online data transfers for storage deals
 	SimultaneousTransfersForStorage uint64
+	// The maximum number of simultaneous data transfers from any single client
+	// for storage deals.
+	// Unset by default (0), and values higher than SimultaneousTransfersForStorage
+	// will have no effect.
+	SimultaneousTransfersForStoragePerClient uint64
 	// The maximum number of parallel online data transfers for retrieval deals
 	SimultaneousTransfersForRetrieval uint64
 	// Minimum start epoch buffer to give time for sealing of sector with deal.

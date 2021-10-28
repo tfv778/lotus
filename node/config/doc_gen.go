@@ -273,6 +273,15 @@ passed to the sealing node by the markets service. 0 is unlimited.`,
 			Comment: `The maximum number of parallel online data transfers for storage deals`,
 		},
 		{
+			Name: "SimultaneousTransfersForStoragePerClient",
+			Type: "uint64",
+
+			Comment: `The maximum number of simultaneous data transfers from any single client
+for storage deals.
+Unset by default (0), and values higher than SimultaneousTransfersForStorage
+will have no effect.`,
+		},
+		{
 			Name: "SimultaneousTransfersForRetrieval",
 			Type: "uint64",
 
