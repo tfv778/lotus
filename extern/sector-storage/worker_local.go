@@ -3,6 +3,7 @@ package sectorstorage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -126,6 +127,7 @@ type localWorkerPathProvider struct {
 func (l *localWorkerPathProvider) AcquireSector(ctx context.Context, sector storage.SectorRef, existing storiface.SectorFileType, allocate storiface.SectorFileType, sealing storiface.PathType) (storiface.SectorPaths, func(), error) {
 	paths, storageIDs, err := l.w.storage.AcquireSector(ctx, sector, existing, allocate, sealing, l.op)
 	if err != nil {
+		fmt.Printf("local worker path provider failure\n")
 		return storiface.SectorPaths{}, nil, err
 	}
 
@@ -160,16 +162,18 @@ func (l *LocalWorker) ffiExec() (ffiwrapper.Storage, error) {
 type ReturnType string
 
 const (
-	AddPiece        ReturnType = "AddPiece"
-	SealPreCommit1  ReturnType = "SealPreCommit1"
-	SealPreCommit2  ReturnType = "SealPreCommit2"
-	SealCommit1     ReturnType = "SealCommit1"
-	SealCommit2     ReturnType = "SealCommit2"
-	FinalizeSector  ReturnType = "FinalizeSector"
-	ReleaseUnsealed ReturnType = "ReleaseUnsealed"
-	MoveStorage     ReturnType = "MoveStorage"
-	UnsealPiece     ReturnType = "UnsealPiece"
-	Fetch           ReturnType = "Fetch"
+	AddPiece           ReturnType = "AddPiece"
+	SealPreCommit1     ReturnType = "SealPreCommit1"
+	SealPreCommit2     ReturnType = "SealPreCommit2"
+	SealCommit1        ReturnType = "SealCommit1"
+	SealCommit2        ReturnType = "SealCommit2"
+	FinalizeSector     ReturnType = "FinalizeSector"
+	ReplicaUpdate      ReturnType = "ReplicaUpdate"
+	ProveReplicaUpdate ReturnType = "ProveReplicaUpdate"
+	ReleaseUnsealed    ReturnType = "ReleaseUnsealed"
+	MoveStorage        ReturnType = "MoveStorage"
+	UnsealPiece        ReturnType = "UnsealPiece"
+	Fetch              ReturnType = "Fetch"
 )
 
 // in: func(WorkerReturn, context.Context, CallID, err string)
@@ -214,6 +218,7 @@ var returnFunc = map[ReturnType]func(context.Context, storiface.CallID, storifac
 	SealCommit2:     rfunc(storiface.WorkerReturn.ReturnSealCommit2),
 	FinalizeSector:  rfunc(storiface.WorkerReturn.ReturnFinalizeSector),
 	ReleaseUnsealed: rfunc(storiface.WorkerReturn.ReturnReleaseUnsealed),
+	ReplicaUpdate:   rfunc(storiface.WorkerReturn.ReturnReplicaUpdate),
 	MoveStorage:     rfunc(storiface.WorkerReturn.ReturnMoveStorage),
 	UnsealPiece:     rfunc(storiface.WorkerReturn.ReturnUnsealPiece),
 	Fetch:           rfunc(storiface.WorkerReturn.ReturnFetch),
@@ -379,6 +384,28 @@ func (l *LocalWorker) SealCommit2(ctx context.Context, sector storage.SectorRef,
 
 	return l.asyncCall(ctx, sector, SealCommit2, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
 		return sb.SealCommit2(ctx, sector, phase1Out)
+	})
+}
+
+func (l *LocalWorker) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storiface.CallID, error) {
+	sb, err := l.executor()
+	if err != nil {
+		return storiface.UndefCall, err
+	}
+
+	return l.asyncCall(ctx, sector, ProveReplicaUpdate, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
+		return sb.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed)
+	})
+}
+
+func (l *LocalWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (storiface.CallID, error) {
+	sb, err := l.executor()
+	if err != nil {
+		return storiface.UndefCall, err
+	}
+
+	return l.asyncCall(ctx, sector, ReplicaUpdate, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
+		return sb.ReplicaUpdate(ctx, sector, pieces)
 	})
 }
 

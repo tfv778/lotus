@@ -124,6 +124,8 @@ type StorageMiner interface {
 	ReturnSealCommit1(ctx context.Context, callID storiface.CallID, out storage.Commit1Out, err *storiface.CallError) error       //perm:admin retry:true
 	ReturnSealCommit2(ctx context.Context, callID storiface.CallID, proof storage.Proof, err *storiface.CallError) error          //perm:admin retry:true
 	ReturnFinalizeSector(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error                            //perm:admin retry:true
+	ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error                             //perm:admin retry:true
+	ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error                        //perm:admin retry:true
 	ReturnReleaseUnsealed(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error                           //perm:admin retry:true
 	ReturnMoveStorage(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error                               //perm:admin retry:true
 	ReturnUnsealPiece(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error                               //perm:admin retry:true

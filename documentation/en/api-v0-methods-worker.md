@@ -17,6 +17,8 @@
   * [ProcessSession](#ProcessSession)
 * [Release](#Release)
   * [ReleaseUnsealed](#ReleaseUnsealed)
+* [Replica](#Replica)
+  * [ReplicaUpdate](#ReplicaUpdate)
 * [Seal](#Seal)
   * [SealCommit1](#SealCommit1)
   * [SealCommit2](#SealCommit2)
@@ -266,6 +268,39 @@ Response: `"07070707-0707-0707-0707-070707070707"`
 
 
 ### ReleaseUnsealed
+
+
+Perms: admin
+
+Inputs:
+```json
+[
+  {
+    "ID": {
+      "Miner": 1000,
+      "Number": 9
+    },
+    "ProofType": 8
+  },
+  null
+]
+```
+
+Response:
+```json
+{
+  "Sector": {
+    "Miner": 1000,
+    "Number": 9
+  },
+  "ID": "07070707-0707-0707-0707-070707070707"
+}
+```
+
+## Replica
+
+
+### ReplicaUpdate
 
 
 Perms: admin

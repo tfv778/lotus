@@ -261,6 +261,19 @@ func (mgr *SectorMgr) SealCommit2(ctx context.Context, sid storage.SectorRef, ph
 	return out[:], nil
 }
 
+func (mgr *SectorMgr) ReplicaUpdate(ctx context.Context, sid storage.SectorRef, pieces []abi.PieceInfo) (*storage.ReplicaUpdateOut, error) {
+	out := &storage.ReplicaUpdateOut{}
+	return out, nil
+}
+
+func (mgr *SectorMgr) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaUpdateProof, error) {
+	return make([]byte, 0), nil
+}
+
+func (mgr *SectorMgr) ReleaseSealed(ctx context.Context, sid storage.SectorRef) error {
+	return nil
+}
+
 // Test Instrumentation Methods
 
 func (mgr *SectorMgr) MarkFailed(sid storage.SectorRef, failed bool) error {
@@ -456,6 +469,8 @@ func (mgr *SectorMgr) CheckProvable(ctx context.Context, pp abi.RegisteredPoStPr
 	return bad, nil
 }
 
+var _ storiface.WorkerReturn = &SectorMgr{}
+
 func (mgr *SectorMgr) ReturnAddPiece(ctx context.Context, callID storiface.CallID, pi abi.PieceInfo, err *storiface.CallError) error {
 	panic("not supported")
 }
@@ -497,6 +512,14 @@ func (mgr *SectorMgr) ReturnReadPiece(ctx context.Context, callID storiface.Call
 }
 
 func (mgr *SectorMgr) ReturnFetch(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
+	panic("not supported")
+}
+
+func (mgr *SectorMgr) ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
+	panic("not supported")
+}
+
+func (mgr *SectorMgr) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
 	panic("not supported")
 }
 

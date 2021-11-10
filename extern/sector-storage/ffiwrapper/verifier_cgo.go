@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
 	"github.com/filecoin-project/specs-storage/storage"
+	"github.com/ipfs/go-cid"
 
 	"github.com/filecoin-project/lotus/extern/sector-storage/storiface"
 )
@@ -139,4 +140,8 @@ func (proofVerifier) VerifyWindowPoSt(ctx context.Context, info proof5.WindowPoS
 func (proofVerifier) GenerateWinningPoStSectorChallenge(ctx context.Context, proofType abi.RegisteredPoStProof, minerID abi.ActorID, randomness abi.PoStRandomness, eligibleSectorCount uint64) ([]uint64, error) {
 	randomness[31] &= 0x3f
 	return ffi.GenerateWinningPoStSectorChallenge(proofType, minerID, randomness, eligibleSectorCount)
+}
+
+func (proofVerifier) VerifyReplicaUpdate(ctx context.Context, proofType abi.RegisteredUpdateProof, proof []byte, sectorKey, newSealed, unsealed cid.Cid) (bool, error) {
+	return ffi.SectorUpdate.VerifyUpdateProof(proofType, proof, sectorKey, newSealed, unsealed)
 }

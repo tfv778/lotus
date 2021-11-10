@@ -55,7 +55,19 @@ func (t *testExec) ReleaseUnsealed(ctx context.Context, sector storage.SectorRef
 	panic("implement me")
 }
 
+func (t *testExec) ReleaseSealed(ctx context.Context, sector storage.SectorRef) error {
+	panic("implement me")
+}
+
 func (t *testExec) Remove(ctx context.Context, sector storage.SectorRef) error {
+	panic("implement me")
+}
+
+func (t *testExec) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (*storage.ReplicaUpdateOut, error) {
+	panic("implement me")
+}
+
+func (t *testExec) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaUpdateProof, error) {
 	panic("implement me")
 }
 

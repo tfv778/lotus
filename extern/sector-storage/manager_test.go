@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/filecoin-project/go-state-types/abi"
@@ -65,11 +67,11 @@ func newTestStorage(t *testing.T) *testStorage {
 }
 
 func (t testStorage) cleanup() {
-	for _, path := range t.StoragePaths {
-		if err := os.RemoveAll(path.Path); err != nil {
-			fmt.Println("Cleanup error:", err)
-		}
-	}
+	// for _, path := range t.StoragePaths {
+	// 	if err := os.RemoveAll(path.Path); err != nil {
+	// 		fmt.Println("Cleanup error:", err)
+	// 	}
+	// }
 }
 
 func (t testStorage) GetStorage() (stores.StorageConfig, error) {
@@ -160,6 +162,95 @@ func TestSimple(t *testing.T) {
 
 	_, err = m.SealPreCommit1(ctx, sid, ticket, pieces)
 	require.NoError(t, err)
+}
+
+type Reader struct{}
+
+func (Reader) Read(out []byte) (int, error) {
+	for i := range out {
+		out[i] = 0
+	}
+	return len(out), nil
+}
+
+type NullReader struct {
+	*io.LimitedReader
+}
+
+func NewNullReader(size abi.UnpaddedPieceSize) io.Reader {
+	return &NullReader{(io.LimitReader(&Reader{}, int64(size))).(*io.LimitedReader)}
+}
+
+func (m NullReader) NullBytes() int64 {
+	return m.N
+}
+
+func TestSnapDeals(t *testing.T) {
+	logging.SetAllLoggers(logging.LevelWarn)
+
+	ctx := context.Background()
+	m, lstor, stor, idx, cleanup := newTestMgr(ctx, t, datastore.NewMapDatastore())
+	defer cleanup()
+
+	localTasks := []sealtasks.TaskType{
+		sealtasks.TTAddPiece, sealtasks.TTPreCommit1, sealtasks.TTPreCommit2, sealtasks.TTCommit1, sealtasks.TTCommit2, sealtasks.TTFinalize, sealtasks.TTFetch, sealtasks.TTReplicaUpdate,
+	}
+	wds := datastore.NewMapDatastore()
+
+	w := NewLocalWorker(WorkerConfig{TaskTypes: localTasks}, stor, lstor, idx, m, statestore.New(wds))
+	err := m.AddWorker(ctx, w)
+	require.NoError(t, err)
+
+	sid := storage.SectorRef{
+		ID:        abi.SectorID{Miner: 1000, Number: 1},
+		ProofType: abi.RegisteredSealProof_StackedDrg2KiBV1,
+	}
+
+	// Pack sector with no pieces
+	p0, err := m.AddPiece(ctx, sid, nil, 2*1016, NewNullReader(2*1016))
+	require.NoError(t, err)
+	ccPieces := []abi.PieceInfo{p0}
+
+	// Precommit and Seal a CC sector
+	fmt.Printf("PC1\n")
+	ticket := abi.SealRandomness{9, 9, 9, 9, 9, 9, 9, 9}
+	pc1Out, err := m.SealPreCommit1(ctx, sid, ticket, ccPieces)
+	require.NoError(t, err)
+	fmt.Printf("PC2\n")
+	pc2Out, err := m.SealPreCommit2(ctx, sid, pc1Out)
+
+	require.NoError(t, err)
+	seed := abi.InteractiveSealRandomness{1, 1, 1, 1, 1, 1, 1}
+	fmt.Printf("C1\n")
+	c1Out, err := m.SealCommit1(ctx, sid, ticket, seed, nil, pc2Out)
+	require.NoError(t, err)
+	fmt.Printf("C2\n")
+	_, err = m.SealCommit2(ctx, sid, c1Out)
+	require.NoError(t, err)
+
+	// Now do a snap deals replica update
+	sectorKey := pc2Out.Sealed
+
+	p1, err := m.AddPiece(ctx, sid, nil, 1016, strings.NewReader(strings.Repeat("kkkkkkkk", 127)))
+	require.NoError(t, err)
+	require.Equal(t, abi.PaddedPieceSize(1024), p1.Size)
+
+	p2, err := m.AddPiece(ctx, sid, []abi.UnpaddedPieceSize{p1.Size.Unpadded()}, 1016, strings.NewReader(strings.Repeat("jjjjjjjj", 127)))
+	require.NoError(t, err)
+	require.Equal(t, abi.PaddedPieceSize(1024), p1.Size)
+
+	pieces := []abi.PieceInfo{p1, p2}
+	fmt.Printf("RU\n")
+	out, err := m.ReplicaUpdate(ctx, sid, pieces)
+	updateProofType, err := sid.ProofType.RegisteredUpdateProof()
+	require.NoError(t, err)
+	require.NotNil(t, out)
+
+	fmt.Printf("PR\n")
+	proof, err := m.ProveReplicaUpdate(ctx, sid, sectorKey, out.NewSealed, out.NewUnsealed)
+	pass, err := ffiwrapper.ProofVerifier.VerifyReplicaUpdate(ctx, updateProofType, proof, sectorKey, out.NewSealed, out.NewUnsealed)
+	require.NoError(t, err)
+	assert.True(t, pass)
 }
 
 func TestRedoPC1(t *testing.T) {

@@ -97,6 +97,7 @@
   * [ReturnMoveStorage](#ReturnMoveStorage)
   * [ReturnReadPiece](#ReturnReadPiece)
   * [ReturnReleaseUnsealed](#ReturnReleaseUnsealed)
+  * [ReturnReplicaUpdate](#ReturnReplicaUpdate)
   * [ReturnSealCommit1](#ReturnSealCommit1)
   * [ReturnSealCommit2](#ReturnSealCommit2)
   * [ReturnSealPreCommit1](#ReturnSealPreCommit1)
@@ -1511,6 +1512,30 @@ Inputs:
 Response: `{}`
 
 ### ReturnReleaseUnsealed
+
+
+Perms: admin
+
+Inputs:
+```json
+[
+  {
+    "Sector": {
+      "Miner": 1000,
+      "Number": 9
+    },
+    "ID": "07070707-0707-0707-0707-070707070707"
+  },
+  {
+    "Code": 0,
+    "Message": "string value"
+  }
+]
+```
+
+Response: `{}`
+
+### ReturnReplicaUpdate
 
 
 Perms: admin

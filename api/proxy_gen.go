@@ -709,9 +709,13 @@ type StorageMinerStruct struct {
 
 		ReturnMoveStorage func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
 
+		ReturnProveReplicaUpdate func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
+
 		ReturnReadPiece func(p0 context.Context, p1 storiface.CallID, p2 bool, p3 *storiface.CallError) error `perm:"admin"`
 
 		ReturnReleaseUnsealed func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
+
+		ReturnReplicaUpdate func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
 
 		ReturnSealCommit1 func(p0 context.Context, p1 storiface.CallID, p2 storage.Commit1Out, p3 *storiface.CallError) error `perm:"admin"`
 
@@ -852,9 +856,13 @@ type WorkerStruct struct {
 
 		ProcessSession func(p0 context.Context) (uuid.UUID, error) `perm:"admin"`
 
+		ProveReplicaUpdate func(p0 context.Context, p1 storage.SectorRef, p2 cid.Cid, p3 cid.Cid, p4 cid.Cid) (storiface.CallID, error) `perm:"admin"`
+
 		ReleaseUnsealed func(p0 context.Context, p1 storage.SectorRef, p2 []storage.Range) (storiface.CallID, error) `perm:"admin"`
 
 		Remove func(p0 context.Context, p1 abi.SectorID) error `perm:"admin"`
+
+		ReplicaUpdate func(p0 context.Context, p1 storage.SectorRef, p2 []abi.PieceInfo) (storiface.CallID, error) `perm:"admin"`
 
 		SealCommit1 func(p0 context.Context, p1 storage.SectorRef, p2 abi.SealRandomness, p3 abi.InteractiveSealRandomness, p4 []abi.PieceInfo, p5 storage.SectorCids) (storiface.CallID, error) `perm:"admin"`
 
@@ -4165,6 +4173,17 @@ func (s *StorageMinerStub) ReturnMoveStorage(p0 context.Context, p1 storiface.Ca
 	return ErrNotSupported
 }
 
+func (s *StorageMinerStruct) ReturnProveReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+	if s.Internal.ReturnProveReplicaUpdate == nil {
+		return ErrNotSupported
+	}
+	return s.Internal.ReturnProveReplicaUpdate(p0, p1, p2)
+}
+
+func (s *StorageMinerStub) ReturnProveReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+	return ErrNotSupported
+}
+
 func (s *StorageMinerStruct) ReturnReadPiece(p0 context.Context, p1 storiface.CallID, p2 bool, p3 *storiface.CallError) error {
 	if s.Internal.ReturnReadPiece == nil {
 		return ErrNotSupported
@@ -4184,6 +4203,17 @@ func (s *StorageMinerStruct) ReturnReleaseUnsealed(p0 context.Context, p1 storif
 }
 
 func (s *StorageMinerStub) ReturnReleaseUnsealed(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+	return ErrNotSupported
+}
+
+func (s *StorageMinerStruct) ReturnReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+	if s.Internal.ReturnReplicaUpdate == nil {
+		return ErrNotSupported
+	}
+	return s.Internal.ReturnReplicaUpdate(p0, p1, p2)
+}
+
+func (s *StorageMinerStub) ReturnReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
 	return ErrNotSupported
 }
 
@@ -4858,6 +4888,17 @@ func (s *WorkerStub) ProcessSession(p0 context.Context) (uuid.UUID, error) {
 	return *new(uuid.UUID), ErrNotSupported
 }
 
+func (s *WorkerStruct) ProveReplicaUpdate(p0 context.Context, p1 storage.SectorRef, p2 cid.Cid, p3 cid.Cid, p4 cid.Cid) (storiface.CallID, error) {
+	if s.Internal.ProveReplicaUpdate == nil {
+		return *new(storiface.CallID), ErrNotSupported
+	}
+	return s.Internal.ProveReplicaUpdate(p0, p1, p2, p3, p4)
+}
+
+func (s *WorkerStub) ProveReplicaUpdate(p0 context.Context, p1 storage.SectorRef, p2 cid.Cid, p3 cid.Cid, p4 cid.Cid) (storiface.CallID, error) {
+	return *new(storiface.CallID), ErrNotSupported
+}
+
 func (s *WorkerStruct) ReleaseUnsealed(p0 context.Context, p1 storage.SectorRef, p2 []storage.Range) (storiface.CallID, error) {
 	if s.Internal.ReleaseUnsealed == nil {
 		return *new(storiface.CallID), ErrNotSupported
@@ -4878,6 +4919,17 @@ func (s *WorkerStruct) Remove(p0 context.Context, p1 abi.SectorID) error {
 
 func (s *WorkerStub) Remove(p0 context.Context, p1 abi.SectorID) error {
 	return ErrNotSupported
+}
+
+func (s *WorkerStruct) ReplicaUpdate(p0 context.Context, p1 storage.SectorRef, p2 []abi.PieceInfo) (storiface.CallID, error) {
+	if s.Internal.ReplicaUpdate == nil {
+		return *new(storiface.CallID), ErrNotSupported
+	}
+	return s.Internal.ReplicaUpdate(p0, p1, p2)
+}
+
+func (s *WorkerStub) ReplicaUpdate(p0 context.Context, p1 storage.SectorRef, p2 []abi.PieceInfo) (storiface.CallID, error) {
+	return *new(storiface.CallID), ErrNotSupported
 }
 
 func (s *WorkerStruct) SealCommit1(p0 context.Context, p1 storage.SectorRef, p2 abi.SealRandomness, p3 abi.InteractiveSealRandomness, p4 []abi.PieceInfo, p5 storage.SectorCids) (storiface.CallID, error) {

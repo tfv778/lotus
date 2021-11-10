@@ -92,6 +92,8 @@ type WorkerCalls interface {
 	SealCommit2(ctx context.Context, sector storage.SectorRef, c1o storage.Commit1Out) (CallID, error)
 	FinalizeSector(ctx context.Context, sector storage.SectorRef, keepUnsealed []storage.Range) (CallID, error)
 	ReleaseUnsealed(ctx context.Context, sector storage.SectorRef, safeToFree []storage.Range) (CallID, error)
+	ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (CallID, error)
+	ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (CallID, error)
 	MoveStorage(ctx context.Context, sector storage.SectorRef, types SectorFileType) (CallID, error)
 	UnsealPiece(context.Context, storage.SectorRef, UnpaddedByteIndex, abi.UnpaddedPieceSize, abi.SealRandomness, cid.Cid) (CallID, error)
 	Fetch(context.Context, storage.SectorRef, SectorFileType, PathType, AcquireMode) (CallID, error)
@@ -145,6 +147,8 @@ type WorkerReturn interface {
 	ReturnSealCommit2(ctx context.Context, callID CallID, proof storage.Proof, err *CallError) error
 	ReturnFinalizeSector(ctx context.Context, callID CallID, err *CallError) error
 	ReturnReleaseUnsealed(ctx context.Context, callID CallID, err *CallError) error
+	ReturnReplicaUpdate(ctx context.Context, callID CallID, err *CallError) error
+	ReturnProveReplicaUpdate(ctx context.Context, callID CallID, err *CallError) error
 	ReturnMoveStorage(ctx context.Context, callID CallID, err *CallError) error
 	ReturnUnsealPiece(ctx context.Context, callID CallID, err *CallError) error
 	ReturnReadPiece(ctx context.Context, callID CallID, ok bool, err *CallError) error

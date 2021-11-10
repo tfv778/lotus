@@ -3,6 +3,7 @@ package sectorstorage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -578,6 +579,36 @@ func (m *Manager) ReleaseUnsealed(ctx context.Context, sector storage.SectorRef,
 	return nil
 }
 
+func (m *Manager) ReleaseSealed(ctx context.Context, sector storage.SectorRef) error {
+	// XXX: removing the cache when we are done with the replica update
+	// XXX: what about removing the sealed sector.  Do a remove task but for the sealed file.
+	// XXX: post race conditions? FSM needs to account for.  FSM waits for a finality or two to do the remove
+	// 	Here it gets tricky
+	//  For window post the update is immediate
+	//  For winning post the update is 900 finalities away
+	//  We need to keep both and route proving to the correct replica for half a day
+	//  XXX: maybe we should do commR keyed storage.
+	// XXX: when you are sealing the sector you don't know the commR
+	// We could expand the key to be sectorID-1, sectorID-2?
+	// Maybe we actually do want to do this for the snap deals upgrade to make PoSt stuff less hellish
+	// @magik: Going through the storage package, adding more to the sector files should be easy. teaching the index add in 1 or 2 places.
+	// 	teachign storage means making bit converting sector ref into path string handle that.
+	// @kubuxu: presents a nice path for repeated updates.  sectorid-0 sealed file is always the sector key.  So then we can operate on that
+	// 	In repeated update case it gets weird because active sector=> sector key => next one.  But you don't always want to store sector key
+	// XXX: what about changing path names?
+	// @magik: very highly annoyihg.  What I would try to do is all attributes with 0 values are the current names.  If values are non-zero we get
+	// different names
+	// @Magik when a new porep inevitably comes it will have partitions that are going to be big.  Whatever we do it should be able to accomodate
+	// sectors with partition
+	// A partition (in NSE for example) one sector is 1TB with multiple 4GB windows.  Each window is diff file on disk
+	// You can seal it in paralell and it takes a lot of resources.  You want to be able to seal a single sector multiple
+	// machiens at once
+	// Whatever new proof will come it will almost certainly have windows -- different files, probably parallelized?
+	// If we want porep that is fast to seal and unseal you need window properties
+
+	panic("implement me")
+}
+
 func (m *Manager) Remove(ctx context.Context, sector storage.SectorRef) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -599,6 +630,108 @@ func (m *Manager) Remove(ctx context.Context, sector storage.SectorRef) error {
 	}
 
 	return err
+}
+
+func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (out storage.ReplicaUpdateProof, err error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	fmt.Printf("Manager, getting worker\n")
+
+	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTReplicaUpdate, sector, sectorKey, newSealed, newUnsealed)
+	if err != nil {
+		return nil, xerrors.Errorf("getWork: %w", err)
+	}
+	defer cancel()
+
+	var waitErr error
+	waitRes := func() {
+		p, werr := m.waitWork(ctx, wk)
+		if werr != nil {
+			waitErr = werr
+			return
+		}
+		if p != nil {
+			out = p.(storage.ReplicaUpdateProof)
+		}
+	}
+
+	if wait { // already in progress
+		waitRes()
+		return out, waitErr
+	}
+
+	if err := m.index.StorageLock(ctx, sector.ID, storiface.FTSealed|storiface.FTUpdate|storiface.FTCache|storiface.FTUpdateCache, storiface.FTNone); err != nil {
+		return nil, xerrors.Errorf("acquiring sector lock: %w", err)
+	}
+
+	selector := newExistingSelector(m.index, sector.ID, storiface.FTUpdate|storiface.FTUpdateCache|storiface.FTSealed|storiface.FTCache, true)
+
+	err = m.sched.Schedule(ctx, sector, sealtasks.TTReplicaUpdate, selector, m.schedFetch(sector, storiface.FTSealed, storiface.PathSealing, storiface.AcquireCopy), func(ctx context.Context, w Worker) error {
+
+		err := m.startWork(ctx, w, wk)(w.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed))
+		if err != nil {
+			return err
+		}
+
+		waitRes()
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return out, waitErr
+}
+
+func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (out *storage.ReplicaUpdateOut, err error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	fmt.Printf("Manager, getting worker\n")
+
+	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTReplicaUpdate, sector, pieces)
+	if err != nil {
+		return nil, xerrors.Errorf("getWork: %w", err)
+	}
+	defer cancel()
+
+	var waitErr error
+	waitRes := func() {
+		p, werr := m.waitWork(ctx, wk)
+		if werr != nil {
+			waitErr = werr
+			return
+		}
+		if p != nil {
+			out = p.(*storage.ReplicaUpdateOut)
+		}
+	}
+
+	if wait { // already in progress
+		waitRes()
+		return out, waitErr
+	}
+
+	if err := m.index.StorageLock(ctx, sector.ID, storiface.FTSealed|storiface.FTCache, storiface.FTUpdate|storiface.FTUpdateCache); err != nil {
+		return nil, xerrors.Errorf("acquiring sector lock: %w", err)
+	}
+
+	selector := newAllocSelector(m.index, storiface.FTUpdate|storiface.FTUpdateCache, storiface.PathSealing)
+
+	err = m.sched.Schedule(ctx, sector, sealtasks.TTReplicaUpdate, selector, m.schedFetch(sector, storiface.FTSealed, storiface.PathSealing, storiface.AcquireCopy), func(ctx context.Context, w Worker) error {
+
+		err := m.startWork(ctx, w, wk)(w.ReplicaUpdate(ctx, sector, pieces))
+		if err != nil {
+			return err
+		}
+
+		waitRes()
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return out, waitErr
 }
 
 func (m *Manager) ReturnAddPiece(ctx context.Context, callID storiface.CallID, pi abi.PieceInfo, err *storiface.CallError) error {
@@ -626,6 +759,14 @@ func (m *Manager) ReturnFinalizeSector(ctx context.Context, callID storiface.Cal
 }
 
 func (m *Manager) ReturnReleaseUnsealed(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
+	return m.returnResult(ctx, callID, nil, err)
+}
+
+func (m *Manager) ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
+	return m.returnResult(ctx, callID, nil, err)
+}
+
+func (m *Manager) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
 	return m.returnResult(ctx, callID, nil, err)
 }
 
