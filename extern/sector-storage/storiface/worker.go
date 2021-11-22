@@ -147,8 +147,8 @@ type WorkerReturn interface {
 	ReturnSealCommit2(ctx context.Context, callID CallID, proof storage.Proof, err *CallError) error
 	ReturnFinalizeSector(ctx context.Context, callID CallID, err *CallError) error
 	ReturnReleaseUnsealed(ctx context.Context, callID CallID, err *CallError) error
-	ReturnReplicaUpdate(ctx context.Context, callID CallID, err *CallError) error
-	ReturnProveReplicaUpdate(ctx context.Context, callID CallID, err *CallError) error
+	ReturnReplicaUpdate(ctx context.Context, callID CallID, out storage.ReplicaUpdateOut, err *CallError) error
+	ReturnProveReplicaUpdate(ctx context.Context, callID CallID, proof storage.ReplicaUpdateProof, err *CallError) error
 	ReturnMoveStorage(ctx context.Context, callID CallID, err *CallError) error
 	ReturnUnsealPiece(ctx context.Context, callID CallID, err *CallError) error
 	ReturnReadPiece(ctx context.Context, callID CallID, ok bool, err *CallError) error

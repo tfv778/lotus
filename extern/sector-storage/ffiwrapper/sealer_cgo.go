@@ -584,7 +584,7 @@ func (sb *Sealer) SealCommit2(ctx context.Context, sector storage.SectorRef, pha
 }
 
 func (sb *Sealer) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaUpdateProof, error) {
-	paths, done, err := sb.sectors.AcquireSector(ctx, sector, storiface.FTSealed|storiface.FTCache|storiface.FTUpdate|storiface.FTUpdateCache, storiface.FTNone, storiface.PathSealing)
+	paths, done, err := sb.sectors.AcquireSector(ctx, sector, storiface.FTSealed|storiface.FTCache|storiface.FTUpdateCache|storiface.FTUpdate, storiface.FTNone, storiface.PathSealing)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to acquire sector paths: %w", err)
 	}
@@ -599,10 +599,11 @@ func (sb *Sealer) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 	return proof, nil
 }
 
-func (sb *Sealer) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (*storage.ReplicaUpdateOut, error) {
+func (sb *Sealer) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (storage.ReplicaUpdateOut, error) {
+	empty := storage.ReplicaUpdateOut{}
 	paths, done, err := sb.sectors.AcquireSector(ctx, sector, storiface.FTSealed|storiface.FTUnsealed|storiface.FTCache, storiface.FTUpdate|storiface.FTUpdateCache, storiface.PathSealing)
 	if err != nil {
-		return nil, xerrors.Errorf("failed to acquire sector paths: %w", err)
+		return empty, xerrors.Errorf("failed to acquire sector paths: %w", err)
 	}
 	defer done()
 
@@ -610,17 +611,17 @@ func (sb *Sealer) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 
 	s, err := os.Stat(paths.Sealed)
 	if err != nil {
-		return nil, err
+		return empty, err
 	}
 	sealedSize := s.Size()
 
 	u, err := os.OpenFile(paths.Update, os.O_RDWR|os.O_CREATE, 0644) // nolint:gosec
 	if err != nil {
-		return nil, xerrors.Errorf("ensuring updated replica file exists: %w", err)
+		return empty, xerrors.Errorf("ensuring updated replica file exists: %w", err)
 	}
 	fallocate.Fallocate(u, 0, sealedSize)
 	if err := u.Close(); err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	if err := os.Mkdir(paths.UpdateCache, 0755); err != nil { // nolint
@@ -628,28 +629,28 @@ func (sb *Sealer) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 			log.Warnf("existing cache in %s; removing", paths.Cache)
 
 			if err := os.RemoveAll(paths.UpdateCache); err != nil {
-				return nil, xerrors.Errorf("remove existing sector cache from %s (sector %d): %w", paths.Cache, sector, err)
+				return empty, xerrors.Errorf("remove existing sector cache from %s (sector %d): %w", paths.Cache, sector, err)
 			}
 
 			if err := os.Mkdir(paths.UpdateCache, 0755); err != nil { // nolint:gosec
-				return nil, xerrors.Errorf("mkdir cache path after cleanup: %w", err)
+				return empty, xerrors.Errorf("mkdir cache path after cleanup: %w", err)
 			}
 		} else {
-			return nil, err
+			return empty, err
 		}
 	}
 
 	// XXX: we want to keep the stuff at the end
 	if err := os.Truncate(paths.Unsealed, sealedSize); err != nil {
-		return nil, xerrors.Errorf("failed to truncate unsealed data file: %w", err)
+		return empty, xerrors.Errorf("failed to truncate unsealed data file: %w", err)
 	}
 
 	sealed, unsealed, err := ffi.SectorUpdate.EncodeInto(updateProofType, paths.Update, paths.UpdateCache, paths.Sealed, paths.Cache, paths.Unsealed, pieces)
 	if err != nil {
-		return nil, xerrors.Errorf("failed to update replica %d with new deal data: %w", sector.ID.Number, err)
+		return empty, xerrors.Errorf("failed to update replica %d with new deal data: %w", sector.ID.Number, err)
 	}
 
-	return &storage.ReplicaUpdateOut{NewSealed: sealed, NewUnsealed: unsealed}, nil
+	return storage.ReplicaUpdateOut{NewSealed: sealed, NewUnsealed: unsealed}, nil
 }
 
 func (sb *Sealer) ReleaseSealed(ctx context.Context, sector storage.SectorRef) error {

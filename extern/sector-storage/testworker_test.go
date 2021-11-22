@@ -70,8 +70,8 @@ func (t *testWorker) AddPiece(ctx context.Context, sector storage.SectorRef, pie
 
 func (t *testWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (storiface.CallID, error) {
 	return t.asyncCall(sector, func(ci storiface.CallID) {
-		_, err := t.mockSeal.ReplicaUpdate(ctx, sector, pieces)
-		if err := t.ret.ReturnReplicaUpdate(ctx, ci, toCallError(err)); err != nil {
+		out, err := t.mockSeal.ReplicaUpdate(ctx, sector, pieces)
+		if err := t.ret.ReturnReplicaUpdate(ctx, ci, out, toCallError(err)); err != nil {
 			log.Error(err)
 		}
 	})
@@ -79,8 +79,8 @@ func (t *testWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRef
 
 func (t *testWorker) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storiface.CallID, error) {
 	return t.asyncCall(sector, func(ci storiface.CallID) {
-		_, err := t.mockSeal.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed)
-		if err := t.ret.ReturnProveReplicaUpdate(ctx, ci, toCallError(err)); err != nil {
+		proof, err := t.mockSeal.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed)
+		if err := t.ret.ReturnProveReplicaUpdate(ctx, ci, proof, toCallError(err)); err != nil {
 			log.Error(err)
 		}
 	})

@@ -29,7 +29,7 @@ import (
 	"github.com/filecoin-project/lotus/extern/sector-storage/storiface"
 )
 
-var pathTypes = []storiface.SectorFileType{storiface.FTUnsealed, storiface.FTSealed, storiface.FTCache}
+var pathTypes = []storiface.SectorFileType{storiface.FTUnsealed, storiface.FTSealed, storiface.FTCache, storiface.FTUpdate, storiface.FTUpdateCache}
 
 type WorkerConfig struct {
 	TaskTypes []sealtasks.TaskType
@@ -128,6 +128,7 @@ func (l *localWorkerPathProvider) AcquireSector(ctx context.Context, sector stor
 	paths, storageIDs, err := l.w.storage.AcquireSector(ctx, sector, existing, allocate, sealing, l.op)
 	if err != nil {
 		fmt.Printf("local worker path provider failure\n")
+		panic(err)
 		return storiface.SectorPaths{}, nil, err
 	}
 
@@ -147,7 +148,7 @@ func (l *localWorkerPathProvider) AcquireSector(ctx context.Context, sector stor
 			}
 
 			sid := storiface.PathByType(storageIDs, fileType)
-
+			fmt.Printf("Declaring sector at path: %s\n", sid)
 			if err := l.w.sindex.StorageDeclareSector(ctx, stores.ID(sid), sector.ID, fileType, l.op == storiface.AcquireMove); err != nil {
 				log.Errorf("declare sector error: %+v", err)
 			}
@@ -211,17 +212,18 @@ func rfunc(in interface{}) func(context.Context, storiface.CallID, storiface.Wor
 }
 
 var returnFunc = map[ReturnType]func(context.Context, storiface.CallID, storiface.WorkerReturn, interface{}, *storiface.CallError) error{
-	AddPiece:        rfunc(storiface.WorkerReturn.ReturnAddPiece),
-	SealPreCommit1:  rfunc(storiface.WorkerReturn.ReturnSealPreCommit1),
-	SealPreCommit2:  rfunc(storiface.WorkerReturn.ReturnSealPreCommit2),
-	SealCommit1:     rfunc(storiface.WorkerReturn.ReturnSealCommit1),
-	SealCommit2:     rfunc(storiface.WorkerReturn.ReturnSealCommit2),
-	FinalizeSector:  rfunc(storiface.WorkerReturn.ReturnFinalizeSector),
-	ReleaseUnsealed: rfunc(storiface.WorkerReturn.ReturnReleaseUnsealed),
-	ReplicaUpdate:   rfunc(storiface.WorkerReturn.ReturnReplicaUpdate),
-	MoveStorage:     rfunc(storiface.WorkerReturn.ReturnMoveStorage),
-	UnsealPiece:     rfunc(storiface.WorkerReturn.ReturnUnsealPiece),
-	Fetch:           rfunc(storiface.WorkerReturn.ReturnFetch),
+	AddPiece:           rfunc(storiface.WorkerReturn.ReturnAddPiece),
+	SealPreCommit1:     rfunc(storiface.WorkerReturn.ReturnSealPreCommit1),
+	SealPreCommit2:     rfunc(storiface.WorkerReturn.ReturnSealPreCommit2),
+	SealCommit1:        rfunc(storiface.WorkerReturn.ReturnSealCommit1),
+	SealCommit2:        rfunc(storiface.WorkerReturn.ReturnSealCommit2),
+	FinalizeSector:     rfunc(storiface.WorkerReturn.ReturnFinalizeSector),
+	ReleaseUnsealed:    rfunc(storiface.WorkerReturn.ReturnReleaseUnsealed),
+	ReplicaUpdate:      rfunc(storiface.WorkerReturn.ReturnReplicaUpdate),
+	ProveReplicaUpdate: rfunc(storiface.WorkerReturn.ReturnProveReplicaUpdate),
+	MoveStorage:        rfunc(storiface.WorkerReturn.ReturnMoveStorage),
+	UnsealPiece:        rfunc(storiface.WorkerReturn.ReturnUnsealPiece),
+	Fetch:              rfunc(storiface.WorkerReturn.ReturnFetch),
 }
 
 func (l *LocalWorker) asyncCall(ctx context.Context, sector storage.SectorRef, rt ReturnType, work func(ctx context.Context, ci storiface.CallID) (interface{}, error)) (storiface.CallID, error) {
@@ -245,7 +247,6 @@ func (l *LocalWorker) asyncCall(ctx context.Context, sector storage.SectorRef, r
 		}
 
 		res, err := work(ctx, ci)
-
 		if err != nil {
 			rb, err := json.Marshal(res)
 			if err != nil {
@@ -263,7 +264,6 @@ func (l *LocalWorker) asyncCall(ctx context.Context, sector storage.SectorRef, r
 			}
 		}
 	}()
-
 	return ci, nil
 }
 
@@ -322,6 +322,7 @@ func (l *LocalWorker) AddPiece(ctx context.Context, sector storage.SectorRef, ep
 
 func (l *LocalWorker) Fetch(ctx context.Context, sector storage.SectorRef, fileType storiface.SectorFileType, ptype storiface.PathType, am storiface.AcquireMode) (storiface.CallID, error) {
 	return l.asyncCall(ctx, sector, Fetch, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
+		fmt.Printf("File type acquired: %b\n", fileType)
 		_, done, err := (&localWorkerPathProvider{w: l, op: am}).AcquireSector(ctx, sector, fileType, storiface.FTNone, ptype)
 		if err == nil {
 			done()
@@ -405,7 +406,8 @@ func (l *LocalWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRe
 	}
 
 	return l.asyncCall(ctx, sector, ReplicaUpdate, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
-		return sb.ReplicaUpdate(ctx, sector, pieces)
+		sealerOut, err := sb.ReplicaUpdate(ctx, sector, pieces)
+		return sealerOut, err
 	})
 }
 

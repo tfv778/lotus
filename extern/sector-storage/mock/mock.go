@@ -261,8 +261,8 @@ func (mgr *SectorMgr) SealCommit2(ctx context.Context, sid storage.SectorRef, ph
 	return out[:], nil
 }
 
-func (mgr *SectorMgr) ReplicaUpdate(ctx context.Context, sid storage.SectorRef, pieces []abi.PieceInfo) (*storage.ReplicaUpdateOut, error) {
-	out := &storage.ReplicaUpdateOut{}
+func (mgr *SectorMgr) ReplicaUpdate(ctx context.Context, sid storage.SectorRef, pieces []abi.PieceInfo) (storage.ReplicaUpdateOut, error) {
+	out := storage.ReplicaUpdateOut{}
 	return out, nil
 }
 
@@ -515,11 +515,11 @@ func (mgr *SectorMgr) ReturnFetch(ctx context.Context, callID storiface.CallID, 
 	panic("not supported")
 }
 
-func (mgr *SectorMgr) ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
+func (mgr *SectorMgr) ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, out storage.ReplicaUpdateOut, err *storiface.CallError) error {
 	panic("not supported")
 }
 
-func (mgr *SectorMgr) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
+func (mgr *SectorMgr) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, out storage.ReplicaUpdateProof, err *storiface.CallError) error {
 	panic("not supported")
 }
 

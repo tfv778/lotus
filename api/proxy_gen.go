@@ -709,13 +709,13 @@ type StorageMinerStruct struct {
 
 		ReturnMoveStorage func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
 
-		ReturnProveReplicaUpdate func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
+		ReturnProveReplicaUpdate func(p0 context.Context, p1 storiface.CallID, p2 storage.ReplicaUpdateProof, p3 *storiface.CallError) error `perm:"admin"`
 
 		ReturnReadPiece func(p0 context.Context, p1 storiface.CallID, p2 bool, p3 *storiface.CallError) error `perm:"admin"`
 
 		ReturnReleaseUnsealed func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
 
-		ReturnReplicaUpdate func(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error `perm:"admin"`
+		ReturnReplicaUpdate func(p0 context.Context, p1 storiface.CallID, p2 storage.ReplicaUpdateOut, p3 *storiface.CallError) error `perm:"admin"`
 
 		ReturnSealCommit1 func(p0 context.Context, p1 storiface.CallID, p2 storage.Commit1Out, p3 *storiface.CallError) error `perm:"admin"`
 
@@ -4173,14 +4173,14 @@ func (s *StorageMinerStub) ReturnMoveStorage(p0 context.Context, p1 storiface.Ca
 	return ErrNotSupported
 }
 
-func (s *StorageMinerStruct) ReturnProveReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+func (s *StorageMinerStruct) ReturnProveReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 storage.ReplicaUpdateProof, p3 *storiface.CallError) error {
 	if s.Internal.ReturnProveReplicaUpdate == nil {
 		return ErrNotSupported
 	}
-	return s.Internal.ReturnProveReplicaUpdate(p0, p1, p2)
+	return s.Internal.ReturnProveReplicaUpdate(p0, p1, p2, p3)
 }
 
-func (s *StorageMinerStub) ReturnProveReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+func (s *StorageMinerStub) ReturnProveReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 storage.ReplicaUpdateProof, p3 *storiface.CallError) error {
 	return ErrNotSupported
 }
 
@@ -4206,14 +4206,14 @@ func (s *StorageMinerStub) ReturnReleaseUnsealed(p0 context.Context, p1 storifac
 	return ErrNotSupported
 }
 
-func (s *StorageMinerStruct) ReturnReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+func (s *StorageMinerStruct) ReturnReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 storage.ReplicaUpdateOut, p3 *storiface.CallError) error {
 	if s.Internal.ReturnReplicaUpdate == nil {
 		return ErrNotSupported
 	}
-	return s.Internal.ReturnReplicaUpdate(p0, p1, p2)
+	return s.Internal.ReturnReplicaUpdate(p0, p1, p2, p3)
 }
 
-func (s *StorageMinerStub) ReturnReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 *storiface.CallError) error {
+func (s *StorageMinerStub) ReturnReplicaUpdate(p0 context.Context, p1 storiface.CallID, p2 storage.ReplicaUpdateOut, p3 *storiface.CallError) error {
 	return ErrNotSupported
 }
 

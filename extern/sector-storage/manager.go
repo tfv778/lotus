@@ -637,7 +637,7 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 	defer cancel()
 	fmt.Printf("Manager, getting worker\n")
 
-	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTReplicaUpdate, sector, sectorKey, newSealed, newUnsealed)
+	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTProveReplicaUpdate, sector, sectorKey, newSealed, newUnsealed)
 	if err != nil {
 		return nil, xerrors.Errorf("getWork: %w", err)
 	}
@@ -647,6 +647,7 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 	waitRes := func() {
 		p, werr := m.waitWork(ctx, wk)
 		if werr != nil {
+			fmt.Printf("yo\n")
 			waitErr = werr
 			return
 		}
@@ -666,7 +667,7 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 
 	selector := newExistingSelector(m.index, sector.ID, storiface.FTUpdate|storiface.FTUpdateCache|storiface.FTSealed|storiface.FTCache, true)
 
-	err = m.sched.Schedule(ctx, sector, sealtasks.TTReplicaUpdate, selector, m.schedFetch(sector, storiface.FTSealed, storiface.PathSealing, storiface.AcquireCopy), func(ctx context.Context, w Worker) error {
+	err = m.sched.Schedule(ctx, sector, sealtasks.TTProveReplicaUpdate, selector, m.schedFetch(sector, storiface.FTSealed, storiface.PathSealing, storiface.AcquireCopy), func(ctx context.Context, w Worker) error {
 
 		err := m.startWork(ctx, w, wk)(w.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed))
 		if err != nil {
@@ -677,20 +678,21 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 		return nil
 	})
 	if err != nil {
+		fmt.Printf("yoyo\n")
 		return nil, err
 	}
 
 	return out, waitErr
 }
 
-func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (out *storage.ReplicaUpdateOut, err error) {
+func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (out storage.ReplicaUpdateOut, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	fmt.Printf("Manager, getting worker\n")
 
 	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTReplicaUpdate, sector, pieces)
 	if err != nil {
-		return nil, xerrors.Errorf("getWork: %w", err)
+		return storage.ReplicaUpdateOut{}, xerrors.Errorf("getWork: %w", err)
 	}
 	defer cancel()
 
@@ -701,8 +703,9 @@ func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 			waitErr = werr
 			return
 		}
+		fmt.Printf("worker out from manager: %v\n", p)
 		if p != nil {
-			out = p.(*storage.ReplicaUpdateOut)
+			out = p.(storage.ReplicaUpdateOut)
 		}
 	}
 
@@ -712,7 +715,7 @@ func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 	}
 
 	if err := m.index.StorageLock(ctx, sector.ID, storiface.FTSealed|storiface.FTCache, storiface.FTUpdate|storiface.FTUpdateCache); err != nil {
-		return nil, xerrors.Errorf("acquiring sector lock: %w", err)
+		return storage.ReplicaUpdateOut{}, xerrors.Errorf("acquiring sector lock: %w", err)
 	}
 
 	selector := newAllocSelector(m.index, storiface.FTUpdate|storiface.FTUpdateCache, storiface.PathSealing)
@@ -728,9 +731,9 @@ func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return storage.ReplicaUpdateOut{}, err
 	}
-
+	fmt.Printf("out: %v\n", out)
 	return out, waitErr
 }
 
@@ -762,12 +765,12 @@ func (m *Manager) ReturnReleaseUnsealed(ctx context.Context, callID storiface.Ca
 	return m.returnResult(ctx, callID, nil, err)
 }
 
-func (m *Manager) ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
-	return m.returnResult(ctx, callID, nil, err)
+func (m *Manager) ReturnReplicaUpdate(ctx context.Context, callID storiface.CallID, out storage.ReplicaUpdateOut, err *storiface.CallError) error {
+	return m.returnResult(ctx, callID, out, err)
 }
 
-func (m *Manager) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {
-	return m.returnResult(ctx, callID, nil, err)
+func (m *Manager) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, proof storage.ReplicaUpdateProof, err *storiface.CallError) error {
+	return m.returnResult(ctx, callID, proof, err)
 }
 
 func (m *Manager) ReturnMoveStorage(ctx context.Context, callID storiface.CallID, err *storiface.CallError) error {

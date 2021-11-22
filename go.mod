@@ -50,7 +50,8 @@ require (
 	github.com/filecoin-project/specs-actors/v4 v4.0.1
 	github.com/filecoin-project/specs-actors/v5 v5.0.4
 	github.com/filecoin-project/specs-actors/v6 v6.0.1
-	github.com/filecoin-project/specs-storage v0.1.1-0.20211119223718-437956f1972c
+	github.com/filecoin-project/specs-actors/v7 v7.0.0-20211117170924-fd07a4c7dff9 // indirect
+	github.com/filecoin-project/specs-storage v0.1.1-0.20211122180140-54de3d023daf
 	github.com/filecoin-project/test-vectors/schema v0.0.5
 	github.com/gbrlsnchs/jwt/v3 v3.0.1
 	github.com/gdamore/tcell/v2 v2.2.0

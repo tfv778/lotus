@@ -15,6 +15,8 @@
   * [MoveStorage](#MoveStorage)
 * [Process](#Process)
   * [ProcessSession](#ProcessSession)
+* [Prove](#Prove)
+  * [ProveReplicaUpdate](#ProveReplicaUpdate)
 * [Release](#Release)
   * [ReleaseUnsealed](#ReleaseUnsealed)
 * [Replica](#Replica)
@@ -263,6 +265,47 @@ Perms: admin
 Inputs: `null`
 
 Response: `"07070707-0707-0707-0707-070707070707"`
+
+## Prove
+
+
+### ProveReplicaUpdate
+
+
+Perms: admin
+
+Inputs:
+```json
+[
+  {
+    "ID": {
+      "Miner": 1000,
+      "Number": 9
+    },
+    "ProofType": 8
+  },
+  {
+    "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
+  },
+  {
+    "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
+  },
+  {
+    "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
+  }
+]
+```
+
+Response:
+```json
+{
+  "Sector": {
+    "Miner": 1000,
+    "Number": 9
+  },
+  "ID": "07070707-0707-0707-0707-070707070707"
+}
+```
 
 ## Release
 

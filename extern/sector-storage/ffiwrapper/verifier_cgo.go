@@ -12,6 +12,7 @@ import (
 	ffi "github.com/filecoin-project/filecoin-ffi"
 	"github.com/filecoin-project/go-state-types/abi"
 	proof5 "github.com/filecoin-project/specs-actors/v5/actors/runtime/proof"
+	proof7 "github.com/filecoin-project/specs-actors/v7/actors/runtime/proof"
 	"github.com/filecoin-project/specs-storage/storage"
 	"github.com/ipfs/go-cid"
 
@@ -143,5 +144,12 @@ func (proofVerifier) GenerateWinningPoStSectorChallenge(ctx context.Context, pro
 }
 
 func (proofVerifier) VerifyReplicaUpdate(ctx context.Context, proofType abi.RegisteredUpdateProof, proof []byte, sectorKey, newSealed, unsealed cid.Cid) (bool, error) {
-	return ffi.SectorUpdate.VerifyUpdateProof(proofType, proof, sectorKey, newSealed, unsealed)
+	pi := proof7.ReplicaUpdateInfo{
+		UpdateProofType:      proofType,
+		OldSealedSectorCID:   sectorKey,
+		NewSealedSectorCID:   newSealed,
+		NewUnsealedSectorCID: unsealed,
+		Proof:                proof,
+	}
+	return ffi.SectorUpdate.VerifyUpdateProof(pi)
 }
