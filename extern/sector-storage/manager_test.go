@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/filecoin-project/go-state-types/abi"
@@ -66,11 +67,11 @@ func newTestStorage(t *testing.T) *testStorage {
 }
 
 func (t testStorage) cleanup() {
-	// for _, path := range t.StoragePaths {
-	// 	if err := os.RemoveAll(path.Path); err != nil {
-	// 		fmt.Println("Cleanup error:", err)
-	// 	}
-	// }
+	for _, path := range t.StoragePaths {
+		if err := os.RemoveAll(path.Path); err != nil {
+			fmt.Println("Cleanup error:", err)
+		}
+	}
 }
 
 func (t testStorage) GetStorage() (stores.StorageConfig, error) {
@@ -243,15 +244,13 @@ func TestSnapDeals(t *testing.T) {
 	updateProofType, err := sid.ProofType.RegisteredUpdateProof()
 	require.NoError(t, err)
 	require.NotNil(t, out)
-	_ = sectorKey
-	_ = updateProofType
 	fmt.Printf("PR\n")
 	proof, err := m.ProveReplicaUpdate(ctx, sid, sectorKey, out.NewSealed, out.NewUnsealed)
 	require.NoError(t, err)
 	require.NotNil(t, proof)
-	// pass, err := ffiwrapper.ProofVerifier.VerifyReplicaUpdate(ctx, updateProofType, proof, sectorKey, out.NewSealed, out.NewUnsealed)
-	// require.NoError(t, err)
-	// assert.True(t, pass)
+	pass, err := ffiwrapper.ProofVerifier.VerifyReplicaUpdate(ctx, updateProofType, proof, sectorKey, out.NewSealed, out.NewUnsealed)
+	require.NoError(t, err)
+	assert.True(t, pass)
 }
 
 func TestRedoPC1(t *testing.T) {

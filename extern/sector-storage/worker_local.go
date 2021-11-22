@@ -3,7 +3,6 @@ package sectorstorage
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -127,8 +126,6 @@ type localWorkerPathProvider struct {
 func (l *localWorkerPathProvider) AcquireSector(ctx context.Context, sector storage.SectorRef, existing storiface.SectorFileType, allocate storiface.SectorFileType, sealing storiface.PathType) (storiface.SectorPaths, func(), error) {
 	paths, storageIDs, err := l.w.storage.AcquireSector(ctx, sector, existing, allocate, sealing, l.op)
 	if err != nil {
-		fmt.Printf("local worker path provider failure\n")
-		panic(err)
 		return storiface.SectorPaths{}, nil, err
 	}
 
@@ -148,7 +145,6 @@ func (l *localWorkerPathProvider) AcquireSector(ctx context.Context, sector stor
 			}
 
 			sid := storiface.PathByType(storageIDs, fileType)
-			fmt.Printf("Declaring sector at path: %s\n", sid)
 			if err := l.w.sindex.StorageDeclareSector(ctx, stores.ID(sid), sector.ID, fileType, l.op == storiface.AcquireMove); err != nil {
 				log.Errorf("declare sector error: %+v", err)
 			}
@@ -322,7 +318,6 @@ func (l *LocalWorker) AddPiece(ctx context.Context, sector storage.SectorRef, ep
 
 func (l *LocalWorker) Fetch(ctx context.Context, sector storage.SectorRef, fileType storiface.SectorFileType, ptype storiface.PathType, am storiface.AcquireMode) (storiface.CallID, error) {
 	return l.asyncCall(ctx, sector, Fetch, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
-		fmt.Printf("File type acquired: %b\n", fileType)
 		_, done, err := (&localWorkerPathProvider{w: l, op: am}).AcquireSector(ctx, sector, fileType, storiface.FTNone, ptype)
 		if err == nil {
 			done()

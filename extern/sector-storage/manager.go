@@ -3,7 +3,6 @@ package sectorstorage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -635,7 +634,6 @@ func (m *Manager) Remove(ctx context.Context, sector storage.SectorRef) error {
 func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (out storage.ReplicaUpdateProof, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	fmt.Printf("Manager, getting worker\n")
 
 	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTProveReplicaUpdate, sector, sectorKey, newSealed, newUnsealed)
 	if err != nil {
@@ -647,7 +645,6 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 	waitRes := func() {
 		p, werr := m.waitWork(ctx, wk)
 		if werr != nil {
-			fmt.Printf("yo\n")
 			waitErr = werr
 			return
 		}
@@ -678,7 +675,6 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 		return nil
 	})
 	if err != nil {
-		fmt.Printf("yoyo\n")
 		return nil, err
 	}
 
@@ -688,7 +684,6 @@ func (m *Manager) ProveReplicaUpdate(ctx context.Context, sector storage.SectorR
 func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (out storage.ReplicaUpdateOut, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	fmt.Printf("Manager, getting worker\n")
 
 	wk, wait, cancel, err := m.getWork(ctx, sealtasks.TTReplicaUpdate, sector, pieces)
 	if err != nil {
@@ -703,7 +698,6 @@ func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 			waitErr = werr
 			return
 		}
-		fmt.Printf("worker out from manager: %v\n", p)
 		if p != nil {
 			out = p.(storage.ReplicaUpdateOut)
 		}
@@ -733,7 +727,6 @@ func (m *Manager) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 	if err != nil {
 		return storage.ReplicaUpdateOut{}, err
 	}
-	fmt.Printf("out: %v\n", out)
 	return out, waitErr
 }
 
