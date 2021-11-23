@@ -579,33 +579,7 @@ func (m *Manager) ReleaseUnsealed(ctx context.Context, sector storage.SectorRef,
 }
 
 func (m *Manager) ReleaseSealed(ctx context.Context, sector storage.SectorRef) error {
-	// XXX: removing the cache when we are done with the replica update
-	// XXX: what about removing the sealed sector.  Do a remove task but for the sealed file.
-	// XXX: post race conditions? FSM needs to account for.  FSM waits for a finality or two to do the remove
-	// 	Here it gets tricky
-	//  For window post the update is immediate
-	//  For winning post the update is 900 finalities away
-	//  We need to keep both and route proving to the correct replica for half a day
-	//  XXX: maybe we should do commR keyed storage.
-	// XXX: when you are sealing the sector you don't know the commR
-	// We could expand the key to be sectorID-1, sectorID-2?
-	// Maybe we actually do want to do this for the snap deals upgrade to make PoSt stuff less hellish
-	// @magik: Going through the storage package, adding more to the sector files should be easy. teaching the index add in 1 or 2 places.
-	// 	teachign storage means making bit converting sector ref into path string handle that.
-	// @kubuxu: presents a nice path for repeated updates.  sectorid-0 sealed file is always the sector key.  So then we can operate on that
-	// 	In repeated update case it gets weird because active sector=> sector key => next one.  But you don't always want to store sector key
-	// XXX: what about changing path names?
-	// @magik: very highly annoyihg.  What I would try to do is all attributes with 0 values are the current names.  If values are non-zero we get
-	// different names
-	// @Magik when a new porep inevitably comes it will have partitions that are going to be big.  Whatever we do it should be able to accomodate
-	// sectors with partition
-	// A partition (in NSE for example) one sector is 1TB with multiple 4GB windows.  Each window is diff file on disk
-	// You can seal it in paralell and it takes a lot of resources.  You want to be able to seal a single sector multiple
-	// machiens at once
-	// Whatever new proof will come it will almost certainly have windows -- different files, probably parallelized?
-	// If we want porep that is fast to seal and unseal you need window properties
-
-	panic("implement me")
+	return nil
 }
 
 func (m *Manager) Remove(ctx context.Context, sector storage.SectorRef) error {

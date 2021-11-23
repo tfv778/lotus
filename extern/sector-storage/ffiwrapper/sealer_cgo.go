@@ -659,9 +659,7 @@ func (sb *Sealer) ProveReplicaUpdate2(ctx context.Context, sector storage.Sector
 }
 
 func (sb *Sealer) ReleaseSealed(ctx context.Context, sector storage.SectorRef) error {
-	panic("implemente me")
-	// XXX once we have an ffi call put it in here
-	//return nil
+	return xerrors.Errorf("not supported at this layer")
 }
 
 func (sb *Sealer) FinalizeSector(ctx context.Context, sector storage.SectorRef, keepUnsealed []storage.Range) error {

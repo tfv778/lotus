@@ -30,8 +30,8 @@ var FSOverheadSeal = map[SectorFileType]int{ // 10x overheads
 	FTUnsealed:    FSOverheadDen,
 	FTSealed:      FSOverheadDen,
 	FTUpdate:      FSOverheadDen,
-	FTUpdateCache: FSOverheadDen * 2, // XXX: do we need the full FTCache size for snap deals cache?
-	FTCache:       141,               // 11 layers + D(2x ssize) + C + R'
+	FTUpdateCache: FSOverheadDen * 2,
+	FTCache:       141, // 11 layers + D(2x ssize) + C + R'
 }
 
 // sector size * disk / fs overhead.  FSOverheadDen is like the unit of sector size
