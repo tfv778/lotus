@@ -95,7 +95,8 @@
   * [ReturnFetch](#ReturnFetch)
   * [ReturnFinalizeSector](#ReturnFinalizeSector)
   * [ReturnMoveStorage](#ReturnMoveStorage)
-  * [ReturnProveReplicaUpdate](#ReturnProveReplicaUpdate)
+  * [ReturnProveReplicaUpdate1](#ReturnProveReplicaUpdate1)
+  * [ReturnProveReplicaUpdate2](#ReturnProveReplicaUpdate2)
   * [ReturnReadPiece](#ReturnReadPiece)
   * [ReturnReleaseUnsealed](#ReturnReleaseUnsealed)
   * [ReturnReplicaUpdate](#ReturnReplicaUpdate)
@@ -1487,7 +1488,32 @@ Inputs:
 
 Response: `{}`
 
-### ReturnProveReplicaUpdate
+### ReturnProveReplicaUpdate1
+
+
+Perms: admin
+
+Inputs:
+```json
+[
+  {
+    "Sector": {
+      "Miner": 1000,
+      "Number": 9
+    },
+    "ID": "07070707-0707-0707-0707-070707070707"
+  },
+  null,
+  {
+    "Code": 0,
+    "Message": "string value"
+  }
+]
+```
+
+Response: `{}`
+
+### ReturnProveReplicaUpdate2
 
 
 Perms: admin

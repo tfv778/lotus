@@ -77,10 +77,19 @@ func (t *testWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRef
 	})
 }
 
-func (t *testWorker) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storiface.CallID, error) {
+func (t *testWorker) ProveReplicaUpdate1(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storiface.CallID, error) {
 	return t.asyncCall(sector, func(ci storiface.CallID) {
-		proof, err := t.mockSeal.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed)
-		if err := t.ret.ReturnProveReplicaUpdate(ctx, ci, proof, toCallError(err)); err != nil {
+		vanillaProofs, err := t.mockSeal.ProveReplicaUpdate1(ctx, sector, sectorKey, newSealed, newUnsealed)
+		if err := t.ret.ReturnProveReplicaUpdate1(ctx, ci, vanillaProofs, toCallError(err)); err != nil {
+			log.Error(err)
+		}
+	})
+}
+
+func (t *testWorker) ProveReplicaUpdate2(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid, vanillaProofs storage.ReplicaVanillaProofs) (storiface.CallID, error) {
+	return t.asyncCall(sector, func(ci storiface.CallID) {
+		proof, err := t.mockSeal.ProveReplicaUpdate2(ctx, sector, sectorKey, newSealed, newUnsealed, vanillaProofs)
+		if err := t.ret.ReturnProveReplicaUpdate2(ctx, ci, proof, toCallError(err)); err != nil {
 			log.Error(err)
 		}
 	})

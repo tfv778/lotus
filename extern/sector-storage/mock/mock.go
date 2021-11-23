@@ -266,7 +266,12 @@ func (mgr *SectorMgr) ReplicaUpdate(ctx context.Context, sid storage.SectorRef, 
 	return out, nil
 }
 
-func (mgr *SectorMgr) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaUpdateProof, error) {
+func (mgr *SectorMgr) ProveReplicaUpdate1(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaVanillaProofs, error) {
+	out := make([][]byte, 0)
+	return out, nil
+}
+
+func (mgr *SectorMgr) ProveReplicaUpdate2(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid, vanillaProofs storage.ReplicaVanillaProofs) (storage.ReplicaUpdateProof, error) {
 	return make([]byte, 0), nil
 }
 
@@ -519,7 +524,11 @@ func (mgr *SectorMgr) ReturnReplicaUpdate(ctx context.Context, callID storiface.
 	panic("not supported")
 }
 
-func (mgr *SectorMgr) ReturnProveReplicaUpdate(ctx context.Context, callID storiface.CallID, out storage.ReplicaUpdateProof, err *storiface.CallError) error {
+func (mgr *SectorMgr) ReturnProveReplicaUpdate1(ctx context.Context, callID storiface.CallID, out storage.ReplicaVanillaProofs, err *storiface.CallError) error {
+	panic("not supported")
+}
+
+func (mgr *SectorMgr) ReturnProveReplicaUpdate2(ctx context.Context, callID storiface.CallID, out storage.ReplicaUpdateProof, err *storiface.CallError) error {
 	panic("not supported")
 }
 

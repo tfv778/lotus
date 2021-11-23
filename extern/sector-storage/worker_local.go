@@ -159,18 +159,19 @@ func (l *LocalWorker) ffiExec() (ffiwrapper.Storage, error) {
 type ReturnType string
 
 const (
-	AddPiece           ReturnType = "AddPiece"
-	SealPreCommit1     ReturnType = "SealPreCommit1"
-	SealPreCommit2     ReturnType = "SealPreCommit2"
-	SealCommit1        ReturnType = "SealCommit1"
-	SealCommit2        ReturnType = "SealCommit2"
-	FinalizeSector     ReturnType = "FinalizeSector"
-	ReplicaUpdate      ReturnType = "ReplicaUpdate"
-	ProveReplicaUpdate ReturnType = "ProveReplicaUpdate"
-	ReleaseUnsealed    ReturnType = "ReleaseUnsealed"
-	MoveStorage        ReturnType = "MoveStorage"
-	UnsealPiece        ReturnType = "UnsealPiece"
-	Fetch              ReturnType = "Fetch"
+	AddPiece            ReturnType = "AddPiece"
+	SealPreCommit1      ReturnType = "SealPreCommit1"
+	SealPreCommit2      ReturnType = "SealPreCommit2"
+	SealCommit1         ReturnType = "SealCommit1"
+	SealCommit2         ReturnType = "SealCommit2"
+	FinalizeSector      ReturnType = "FinalizeSector"
+	ReplicaUpdate       ReturnType = "ReplicaUpdate"
+	ProveReplicaUpdate1 ReturnType = "ProveReplicaUpdate1"
+	ProveReplicaUpdate2 ReturnType = "ProveReplicaUpdate2"
+	ReleaseUnsealed     ReturnType = "ReleaseUnsealed"
+	MoveStorage         ReturnType = "MoveStorage"
+	UnsealPiece         ReturnType = "UnsealPiece"
+	Fetch               ReturnType = "Fetch"
 )
 
 // in: func(WorkerReturn, context.Context, CallID, err string)
@@ -208,18 +209,19 @@ func rfunc(in interface{}) func(context.Context, storiface.CallID, storiface.Wor
 }
 
 var returnFunc = map[ReturnType]func(context.Context, storiface.CallID, storiface.WorkerReturn, interface{}, *storiface.CallError) error{
-	AddPiece:           rfunc(storiface.WorkerReturn.ReturnAddPiece),
-	SealPreCommit1:     rfunc(storiface.WorkerReturn.ReturnSealPreCommit1),
-	SealPreCommit2:     rfunc(storiface.WorkerReturn.ReturnSealPreCommit2),
-	SealCommit1:        rfunc(storiface.WorkerReturn.ReturnSealCommit1),
-	SealCommit2:        rfunc(storiface.WorkerReturn.ReturnSealCommit2),
-	FinalizeSector:     rfunc(storiface.WorkerReturn.ReturnFinalizeSector),
-	ReleaseUnsealed:    rfunc(storiface.WorkerReturn.ReturnReleaseUnsealed),
-	ReplicaUpdate:      rfunc(storiface.WorkerReturn.ReturnReplicaUpdate),
-	ProveReplicaUpdate: rfunc(storiface.WorkerReturn.ReturnProveReplicaUpdate),
-	MoveStorage:        rfunc(storiface.WorkerReturn.ReturnMoveStorage),
-	UnsealPiece:        rfunc(storiface.WorkerReturn.ReturnUnsealPiece),
-	Fetch:              rfunc(storiface.WorkerReturn.ReturnFetch),
+	AddPiece:            rfunc(storiface.WorkerReturn.ReturnAddPiece),
+	SealPreCommit1:      rfunc(storiface.WorkerReturn.ReturnSealPreCommit1),
+	SealPreCommit2:      rfunc(storiface.WorkerReturn.ReturnSealPreCommit2),
+	SealCommit1:         rfunc(storiface.WorkerReturn.ReturnSealCommit1),
+	SealCommit2:         rfunc(storiface.WorkerReturn.ReturnSealCommit2),
+	FinalizeSector:      rfunc(storiface.WorkerReturn.ReturnFinalizeSector),
+	ReleaseUnsealed:     rfunc(storiface.WorkerReturn.ReturnReleaseUnsealed),
+	ReplicaUpdate:       rfunc(storiface.WorkerReturn.ReturnReplicaUpdate),
+	ProveReplicaUpdate1: rfunc(storiface.WorkerReturn.ReturnProveReplicaUpdate1),
+	ProveReplicaUpdate2: rfunc(storiface.WorkerReturn.ReturnProveReplicaUpdate2),
+	MoveStorage:         rfunc(storiface.WorkerReturn.ReturnMoveStorage),
+	UnsealPiece:         rfunc(storiface.WorkerReturn.ReturnUnsealPiece),
+	Fetch:               rfunc(storiface.WorkerReturn.ReturnFetch),
 }
 
 func (l *LocalWorker) asyncCall(ctx context.Context, sector storage.SectorRef, rt ReturnType, work func(ctx context.Context, ci storiface.CallID) (interface{}, error)) (storiface.CallID, error) {
@@ -383,17 +385,6 @@ func (l *LocalWorker) SealCommit2(ctx context.Context, sector storage.SectorRef,
 	})
 }
 
-func (l *LocalWorker) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storiface.CallID, error) {
-	sb, err := l.executor()
-	if err != nil {
-		return storiface.UndefCall, err
-	}
-
-	return l.asyncCall(ctx, sector, ProveReplicaUpdate, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
-		return sb.ProveReplicaUpdate(ctx, sector, sectorKey, newSealed, newUnsealed)
-	})
-}
-
 func (l *LocalWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, pieces []abi.PieceInfo) (storiface.CallID, error) {
 	sb, err := l.executor()
 	if err != nil {
@@ -403,6 +394,28 @@ func (l *LocalWorker) ReplicaUpdate(ctx context.Context, sector storage.SectorRe
 	return l.asyncCall(ctx, sector, ReplicaUpdate, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
 		sealerOut, err := sb.ReplicaUpdate(ctx, sector, pieces)
 		return sealerOut, err
+	})
+}
+
+func (l *LocalWorker) ProveReplicaUpdate1(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storiface.CallID, error) {
+	sb, err := l.executor()
+	if err != nil {
+		return storiface.UndefCall, err
+	}
+
+	return l.asyncCall(ctx, sector, ProveReplicaUpdate1, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
+		return sb.ProveReplicaUpdate1(ctx, sector, sectorKey, newSealed, newUnsealed)
+	})
+}
+
+func (l *LocalWorker) ProveReplicaUpdate2(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid, vanillaProofs storage.ReplicaVanillaProofs) (storiface.CallID, error) {
+	sb, err := l.executor()
+	if err != nil {
+		return storiface.UndefCall, err
+	}
+
+	return l.asyncCall(ctx, sector, ProveReplicaUpdate2, func(ctx context.Context, ci storiface.CallID) (interface{}, error) {
+		return sb.ProveReplicaUpdate2(ctx, sector, sectorKey, newSealed, newUnsealed, vanillaProofs)
 	})
 }
 

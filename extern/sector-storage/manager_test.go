@@ -67,11 +67,11 @@ func newTestStorage(t *testing.T) *testStorage {
 }
 
 func (t testStorage) cleanup() {
-	for _, path := range t.StoragePaths {
-		if err := os.RemoveAll(path.Path); err != nil {
-			fmt.Println("Cleanup error:", err)
-		}
-	}
+	// 	for _, path := range t.StoragePaths {
+	// 		if err := os.RemoveAll(path.Path); err != nil {
+	// 			fmt.Println("Cleanup error:", err)
+	// 		}
+	// 	}
 }
 
 func (t testStorage) GetStorage() (stores.StorageConfig, error) {
@@ -192,7 +192,8 @@ func TestSnapDeals(t *testing.T) {
 	defer cleanup()
 
 	localTasks := []sealtasks.TaskType{
-		sealtasks.TTAddPiece, sealtasks.TTPreCommit1, sealtasks.TTPreCommit2, sealtasks.TTCommit1, sealtasks.TTCommit2, sealtasks.TTFinalize, sealtasks.TTFetch, sealtasks.TTReplicaUpdate, sealtasks.TTProveReplicaUpdate,
+		sealtasks.TTAddPiece, sealtasks.TTPreCommit1, sealtasks.TTPreCommit2, sealtasks.TTCommit1, sealtasks.TTCommit2, sealtasks.TTFinalize,
+		sealtasks.TTFetch, sealtasks.TTReplicaUpdate, sealtasks.TTProveReplicaUpdate1, sealtasks.TTProveReplicaUpdate2,
 	}
 	wds := datastore.NewMapDatastore()
 
@@ -267,8 +268,12 @@ func TestSnapDeals(t *testing.T) {
 	updateProofType, err := sid.ProofType.RegisteredUpdateProof()
 	require.NoError(t, err)
 	require.NotNil(t, out)
-	fmt.Printf("PR\n")
-	proof, err := m.ProveReplicaUpdate(ctx, sid, sectorKey, out.NewSealed, out.NewUnsealed)
+	fmt.Printf("PR1\n")
+	vanillaProofs, err := m.ProveReplicaUpdate1(ctx, sid, sectorKey, out.NewSealed, out.NewUnsealed)
+	require.NoError(t, err)
+	require.NotNil(t, vanillaProofs)
+	fmt.Printf("PR2\n")
+	proof, err := m.ProveReplicaUpdate2(ctx, sid, sectorKey, out.NewSealed, out.NewUnsealed, vanillaProofs)
 	require.NoError(t, err)
 	require.NotNil(t, proof)
 	pass, err := ffiwrapper.ProofVerifier.VerifyReplicaUpdate(ctx, updateProofType, proof, sectorKey, out.NewSealed, out.NewUnsealed)

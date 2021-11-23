@@ -67,7 +67,11 @@ func (t *testExec) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, 
 	panic("implement me")
 }
 
-func (t *testExec) ProveReplicaUpdate(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaUpdateProof, error) {
+func (t *testExec) ProveReplicaUpdate1(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid) (storage.ReplicaVanillaProofs, error) {
+	panic("implement me")
+}
+
+func (t *testExec) ProveReplicaUpdate2(ctx context.Context, sector storage.SectorRef, sectorKey, newSealed, newUnsealed cid.Cid, vanillaProofs storage.ReplicaVanillaProofs) (storage.ReplicaUpdateProof, error) {
 	panic("implement me")
 }
 

@@ -16,7 +16,8 @@
 * [Process](#Process)
   * [ProcessSession](#ProcessSession)
 * [Prove](#Prove)
-  * [ProveReplicaUpdate](#ProveReplicaUpdate)
+  * [ProveReplicaUpdate1](#ProveReplicaUpdate1)
+  * [ProveReplicaUpdate2](#ProveReplicaUpdate2)
 * [Release](#Release)
   * [ReleaseUnsealed](#ReleaseUnsealed)
 * [Replica](#Replica)
@@ -269,7 +270,7 @@ Response: `"07070707-0707-0707-0707-070707070707"`
 ## Prove
 
 
-### ProveReplicaUpdate
+### ProveReplicaUpdate1
 
 
 Perms: admin
@@ -293,6 +294,45 @@ Inputs:
   {
     "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
   }
+]
+```
+
+Response:
+```json
+{
+  "Sector": {
+    "Miner": 1000,
+    "Number": 9
+  },
+  "ID": "07070707-0707-0707-0707-070707070707"
+}
+```
+
+### ProveReplicaUpdate2
+
+
+Perms: 
+
+Inputs:
+```json
+[
+  {
+    "ID": {
+      "Miner": 1000,
+      "Number": 9
+    },
+    "ProofType": 8
+  },
+  {
+    "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
+  },
+  {
+    "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
+  },
+  {
+    "/": "bafy2bzacea3wsdh6y3a36tb3skempjoxqpuyompjbmfeyf34fi3uy6uue42v4"
+  },
+  null
 ]
 ```
 
