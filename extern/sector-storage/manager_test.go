@@ -200,13 +200,34 @@ func TestSnapDeals(t *testing.T) {
 	err := m.AddWorker(ctx, w)
 	require.NoError(t, err)
 
-	sid := storage.SectorRef{
-		ID:        abi.SectorID{Miner: 1000, Number: 1},
-		ProofType: abi.RegisteredSealProof_StackedDrg2KiBV1,
+	proofType := abi.RegisteredSealProof_StackedDrg2KiBV1
+	ptStr := os.Getenv("LOTUS_TEST_SNAP_DEALS_PROOF_TYPE")
+	switch ptStr {
+	case "2k":
+	case "8M":
+		proofType = abi.RegisteredSealProof_StackedDrg8MiBV1
+	case "512M":
+		proofType = abi.RegisteredSealProof_StackedDrg512MiBV1
+	case "32G":
+		proofType = abi.RegisteredSealProof_StackedDrg32GiBV1
+	case "64G":
+		proofType = abi.RegisteredSealProof_StackedDrg64GiBV1
+	default:
+		log.Warn("Unspecified proof type, make sure to set LOTUS_TEST_SNAP_DEALS_PROOF_TYPE to '2k', '8M', '512M', '32G' or '64G'")
+		log.Warn("Continuing test with 2k sectors")
 	}
 
+	sid := storage.SectorRef{
+		ID:        abi.SectorID{Miner: 1000, Number: 1},
+		ProofType: proofType,
+	}
+	ss, err := proofType.SectorSize()
+	require.NoError(t, err)
+
+	unpaddedSectorSize := abi.PaddedPieceSize(ss).Unpadded()
+
 	// Pack sector with no pieces
-	p0, err := m.AddPiece(ctx, sid, nil, 2*1016, NewNullReader(2*1016))
+	p0, err := m.AddPiece(ctx, sid, nil, unpaddedSectorSize, NewNullReader(unpaddedSectorSize))
 	require.NoError(t, err)
 	ccPieces := []abi.PieceInfo{p0}
 
@@ -230,13 +251,15 @@ func TestSnapDeals(t *testing.T) {
 	// Now do a snap deals replica update
 	sectorKey := pc2Out.Sealed
 
-	p1, err := m.AddPiece(ctx, sid, nil, 1016, strings.NewReader(strings.Repeat("kkkkkkkk", 127)))
+	// Two pieces each half the size of the sector
+	unpaddedPieceSize := unpaddedSectorSize / 2
+	p1, err := m.AddPiece(ctx, sid, nil, unpaddedPieceSize, strings.NewReader(strings.Repeat("k", int(unpaddedPieceSize))))
 	require.NoError(t, err)
-	require.Equal(t, abi.PaddedPieceSize(1024), p1.Size)
+	require.Equal(t, unpaddedPieceSize.Padded(), p1.Size)
 
-	p2, err := m.AddPiece(ctx, sid, []abi.UnpaddedPieceSize{p1.Size.Unpadded()}, 1016, strings.NewReader(strings.Repeat("jjjjjjjj", 127)))
+	p2, err := m.AddPiece(ctx, sid, []abi.UnpaddedPieceSize{p1.Size.Unpadded()}, unpaddedPieceSize, strings.NewReader(strings.Repeat("j", int(unpaddedPieceSize))))
 	require.NoError(t, err)
-	require.Equal(t, abi.PaddedPieceSize(1024), p1.Size)
+	require.Equal(t, unpaddedPieceSize.Padded(), p1.Size)
 
 	pieces := []abi.PieceInfo{p1, p2}
 	fmt.Printf("RU\n")
