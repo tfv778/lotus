@@ -603,7 +603,10 @@ func (sb *Sealer) ReplicaUpdate(ctx context.Context, sector storage.SectorRef, p
 	if err != nil {
 		return empty, xerrors.Errorf("ensuring updated replica file exists: %w", err)
 	}
-	fallocate.Fallocate(u, 0, sealedSize)
+	if err := fallocate.Fallocate(u, 0, sealedSize); err != nil {
+		return empty, xerrors.Errorf("allocating space for replica update file: %w", err)
+	}
+
 	if err := u.Close(); err != nil {
 		return empty, err
 	}
